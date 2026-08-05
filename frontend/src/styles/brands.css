@@ -1,0 +1,42 @@
+.brands-section{
+padding:60px 0;
+}
+
+.brand-title{
+text-align:center;
+font-size:18px;
+color:#94a3b8;
+margin-bottom:35px;
+letter-spacing:1px;
+text-transform:uppercase;
+}
+
+.brand-container{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:25px;
+}
+
+.brand-card{
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.08);
+border-radius:18px;
+padding:28px;
+font-size:24px;
+font-weight:700;
+text-align:center;
+transition:.35s;
+cursor:pointer;
+}
+
+.brand-card:hover{
+transform:translateY(-8px);
+border-color:#4f8cff;
+box-shadow:0 20px 40px rgba(79,140,255,.15);
+}
+
+@media(max-width:900px){
+.brand-container{
+grid-template-columns:repeat(2,1fr);
+}
+}

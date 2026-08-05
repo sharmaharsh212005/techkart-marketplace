@@ -1,0 +1,57 @@
+:root{
+--bg:#0b1120;
+--surface:#121826;
+--card:#1b2435;
+--primary:#4f8cff;
+--primaryHover:#3b7bff;
+--text:#ffffff;
+--muted:#a7b0c0;
+--border:rgba(255,255,255,.08);
+--radius:18px;
+--shadow:0 15px 40px rgba(0,0,0,.35);
+}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Inter,Segoe UI,sans-serif;
+}
+
+body{
+background:linear-gradient(180deg,#09111f,#0f172a);
+color:var(--text);
+overflow-x:hidden;
+}
+
+a{
+text-decoration:none;
+color:inherit;
+}
+
+.container{
+width:min(1400px,92%);
+margin:auto;
+min-height:80vh;
+padding:40px 0;
+}
+
+button{
+cursor:pointer;
+border:none;
+outline:none;
+transition:.3s;
+}
+
+input{
+outline:none;
+}
+
+img{
+width:100%;
+display:block;
+}
+
+section{
+padding:80px 0;
+}

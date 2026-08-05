@@ -1,0 +1,19 @@
+const express = require("express");
+
+const router = express.Router();
+
+const {
+  getActivities,
+} = require("../controllers/activityController");
+
+const {
+  protect,
+  authorize,
+} = require("../middleware/authMiddleware");
+
+router.use(protect);
+router.use(authorize("admin"));
+
+router.get("/", getActivities);
+
+module.exports = router;

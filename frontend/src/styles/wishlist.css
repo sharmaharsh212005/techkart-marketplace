@@ -1,0 +1,33 @@
+.wishlist-empty-btn{
+    width:270px;
+    height:56px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    margin:28px auto 0;
+
+    border-radius:18px;
+
+    background:linear-gradient(
+        135deg,
+        #3b82f6,
+        #2563eb
+    );
+
+    color:#fff;
+    text-decoration:none;
+
+    font-size:20px;
+    font-weight:700;
+
+    transition:.3s;
+
+    box-shadow:0 12px 30px rgba(59,130,246,.35);
+}
+
+.wishlist-empty-btn:hover{
+    transform:translateY(-2px);
+    color:#fff;
+}

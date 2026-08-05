@@ -1,0 +1,116 @@
+:root{
+    --bg:#0b1120;
+    --surface:#162034;
+    --card:#1b2435;
+    --primary:#4f8cff;
+    --primaryHover:#3b82f6;
+    --text:#ffffff;
+    --muted:#a9b7cf;
+    --border:rgba(255,255,255,.08);
+    --radius:18px;
+    --shadow:0 18px 45px rgba(0,0,0,.35);
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Inter,"Segoe UI",sans-serif;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    background:linear-gradient(180deg,#09111f,#0f172a);
+    color:var(--text);
+    overflow-x:hidden;
+}
+
+#root{
+    width:100%;
+    min-height:100vh;
+}
+
+.container{
+    width:min(1400px,92%);
+    margin:auto;
+}
+
+section{
+    padding:80px 0;
+}
+
+img{
+    width:100%;
+    display:block;
+}
+
+a{
+    text-decoration:none;
+    color:inherit;
+}
+
+button{
+    border:none;
+    outline:none;
+    cursor:pointer;
+    transition:.3s;
+}
+
+input,
+select,
+textarea{
+    outline:none;
+    border:none;
+}
+
+h1{
+    color:#ffffff;
+    font-size:48px;
+    font-weight:700;
+    line-height:1.2;
+}
+
+h2{
+    color:#ffffff;
+    font-size:40px;
+    font-weight:700;
+    line-height:1.2;
+}
+
+h3{
+    color:#ffffff;
+    font-size:24px;
+    font-weight:600;
+}
+
+h4,
+h5,
+h6{
+    color:#ffffff;
+    font-weight:600;
+}
+
+p{
+    color:var(--muted);
+    line-height:1.7;
+}
+
+::-webkit-scrollbar{
+    width:10px;
+}
+
+::-webkit-scrollbar-track{
+    background:#0b1120;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#355ca8;
+    border-radius:10px;
+}
+
+::-webkit-scrollbar-thumb:hover{
+    background:#4f8cff;
+}
