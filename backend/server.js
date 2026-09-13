@@ -28,19 +28,46 @@ const questionRoutes = require("./routes/questionRoutes");
 
 const app = express();
 
-connectDB();
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://techkart-marketplace.vercel.app",
+  "https://techkart-marketplace-1.vercel.app",
+];
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      process.env.CLIENT_URL,
-    ],
+    origin: function (origin, callback) {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+
     credentials: true,
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
   })
 );
-app.use(express.json());
+connectDB();
 
+app.use(express.json());
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"))
@@ -48,10 +75,8 @@ app.use(
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-
 app.use("/api/vendors", publicVendorRoutes);
 app.use("/api/vendor", vendorRoutes);
-
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
