@@ -1,605 +1,647 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+
 import {
-  Eye,
-  ShoppingBag,
-  Package,
-  CreditCard,
-  Download
-} from "lucide-react";
+  FaShoppingBag,
+  FaBoxOpen,
+  FaCreditCard,
+  FaEye,
+  FaTruck,
+  FaCheckCircle,
+  FaClock,
+  FaTimesCircle,
+  FaArrowRight,
+} from "react-icons/fa";
+
 import api from "../api/axios";
 import "../styles/orders.css";
 
 export default function MyOrders() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
-    useEffect(() => {
-        fetchOrders();
-    }, []);
+  const fetchOrders = async () => {
+    try {
+      const { data } = await api.get("/orders/my-orders");
 
-    const fetchOrders = async () => {
+      setOrders(data.data || []);
+    } catch (error) {
+      console.error(error);
 
-        try {
+      toast.error(
+        error.response?.data?.message ||
+          "Unable to load your orders"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            const { data } = await api.get(
-                "/orders/my-orders"
-            );
+  /* =========================================
+     HELPERS
+  ========================================= */
 
-            setOrders(data.data || []);
+  const formatDate = (date) => {
+    if (!date) return "N/A";
 
-        } catch (err) {
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
 
-            console.error(err);
+  const formatPrice = (value) => {
+    return `₹${Number(value || 0).toLocaleString("en-IN")}`;
+  };
 
-        } finally {
-
-            setLoading(false);
-
-        }
-
-    };
-
-    const formatDate = (date) => {
-
-        return new Date(date).toLocaleDateString(
-            "en-IN",
-            {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-            }
-        );
-
-    };
-
-    const formatPrice = (value) => {
-
-        return `₹${Number(value || 0).toLocaleString(
-            "en-IN"
-        )}`;
-
-    };
-
-    const downloadInvoice = async (id) => {
-        try {
-
-            const response = await api.get(
-                `/invoice/${id}`,
-                {
-                    responseType: "blob",
-                    headers: {
-                        Accept: "application/pdf",
-                    },
-                }
-            );
-
-            const blob = new Blob(
-                [response.data],
-                {
-                    type: "application/pdf",
-                }
-            );
-
-            const blobUrl = window.URL.createObjectURL(blob);
-
-            const link = document.createElement("a");
-
-            link.href = blobUrl;
-            link.download = `Invoice-${id}.pdf`;
-
-            document.body.appendChild(link);
-
-            link.click();
-
-            document.body.removeChild(link);
-
-            setTimeout(() => {
-                window.URL.revokeObjectURL(blobUrl);
-            }, 100);
-
-        } catch (error) {
-
-            console.error("Invoice Download Error:", error);
-
-            if (error.response) {
-                console.log(error.response.status);
-                console.log(error.response.data);
-            }
-
-            alert("Unable to download invoice.");
-        }
-    };
-
-    if (loading) {
-
-        return (
-
-            <div className="orders-page">
-
-                <div className="orders-header">
-
-                    <div>
-
-                        <h1>My Orders</h1>
-
-                        <p>
-                            Loading your orders...
-                        </p>
-
-                    </div>
-
-                </div>
-
-                <div className="orders-grid">
-
-                    {[1,2,3].map((item)=>(
-
-                        <div
-                            key={item}
-                            className="order-card loading-card"
-                        >
-
-                            <div className="loading-box title"/>
-
-                            <div className="loading-box line"/>
-
-                            <div className="loading-box line"/>
-
-                            <div className="loading-box button"/>
-
-                        </div>
-
-                    ))}
-
-                </div>
-
-            </div>
-
-        );
-
+  const getImageUrl = (image) => {
+    if (!image) {
+      return "https://placehold.co/120x120/111827/ffffff?text=TK";
     }
 
-    if (!orders.length) {
-
-        return (
-
-            <div className="orders-empty">
-
-                <ShoppingBag size={90} />
-
-                <h2>No Orders Yet</h2>
-
-                <p>
-                    Looks like you haven't placed
-                    your first order.
-                </p>
-
-                <Link
-                    to="/products"
-                    className="shop-btn"
-                >
-                    Continue Shopping
-                </Link>
-
-            </div>
-
-        );
-
+    if (image.startsWith("http")) {
+      return image;
     }
 
+    const baseURL =
+      import.meta.env.VITE_API_URL ||
+      "http://localhost:5000/api";
+
+    return `${baseURL.replace(/\/api\/?$/, "")}${image}`;
+  };
+
+  const getStatusClass = (status = "") => {
+    return status.toLowerCase().replace(/\s/g, "-");
+  };
+
+  const getStatusIcon = (status = "") => {
+    switch (status.toLowerCase()) {
+      case "delivered":
+        return <FaCheckCircle />;
+
+      case "shipped":
+        return <FaTruck />;
+
+      case "processing":
+        return <FaClock />;
+
+      case "cancelled":
+        return <FaTimesCircle />;
+
+      default:
+        return <FaBoxOpen />;
+    }
+  };
+
+  const getStatusStep = (status = "") => {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return 0;
+
+      case "processing":
+        return 1;
+
+      case "shipped":
+        return 2;
+
+      case "delivered":
+        return 3;
+
+      default:
+        return -1;
+    }
+  };
+
+  /* =========================================
+     CANCEL ORDER
+  ========================================= */
+
+  const cancelOrder = async (id) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this order?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await api.put(`/orders/${id}/cancel`);
+
+      toast.success("Order cancelled successfully");
+
+      fetchOrders();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Unable to cancel order"
+      );
+    }
+  };
+
+  /* =========================================
+     LOADING
+  ========================================= */
+
+  if (loading) {
     return (
+      <div className="orders-page">
+        <div className="orders-container">
+          <div className="orders-header">
+            <div className="orders-title-wrap">
+              <div className="orders-title-icon">
+                <FaShoppingBag />
+              </div>
 
-        <div className="orders-page">
-            <div className="orders-header">
+              <div>
+                <h1>My Orders</h1>
+                <p>
+                  Track your purchases and delivery status.
+                </p>
+              </div>
+            </div>
+          </div>
 
-                <div className="header-left">
+          <div className="orders-loading-grid">
+            {[1, 2].map((item) => (
+              <div
+                className="order-skeleton"
+                key={item}
+              >
+                <div className="skeleton skeleton-title"></div>
+                <div className="skeleton skeleton-line"></div>
+                <div className="skeleton skeleton-line"></div>
+                <div className="skeleton skeleton-product"></div>
+                <div className="skeleton skeleton-product"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-                    <h1>My Orders</h1>
+  /* =========================================
+     EMPTY ORDERS
+  ========================================= */
 
-                    <p>
-                        Track your purchases and delivery status.
-                    </p>
-
-                </div>
-
-                <div className="orders-counter">
-
-                    <Package size={30} />
-
-                    <div>
-
-                        <span>
-                            {orders.length}
-                        </span>
-
-                        <small>
-                            {orders.length > 1
-                                ? "Orders"
-                                : "Order"}
-                        </small>
-
-                    </div>
-
-                </div>
-
+  if (!orders.length) {
+    return (
+      <div className="orders-page">
+        <div className="orders-container">
+          <div className="orders-empty">
+            <div className="empty-icon">
+              <FaShoppingBag />
             </div>
 
-            <div className="orders-grid">
-
-                {orders.map((order) => (
-
-                    <div
-                        key={order._id}
-                        className="order-card"
-                    >
-
-                        {/* ===========================
-                           CARD HEADER
-                        =========================== */}
-
-                        <div className="card-header">
-
-                            <div className="card-left">
-
-                                <h2>
-
-                                    Order #
-
-                                    {order._id
-                                        .slice(-8)
-                                        .toUpperCase()}
-
-                                </h2>
-
-                                <span className="order-date">
-
-                                    Placed on{" "}
-
-                                    {formatDate(
-                                        order.createdAt
-                                    )}
-
-                                </span>
-
-                            </div>
-
-                            <div className="card-right">
-
-                                <Link
-                                    to={`/orders/${order._id}`}
-                                    className="view-btn"
-                                >
-
-                                    <Eye size={18} />
-
-                                    View Details
-
-                                </Link>
-
-                            </div>
-
-                        </div>
-
-                        {/* ===========================
-                           STATUS BADGES
-                        =========================== */}
-
-                        <div className="order-status-row">
-
-                            <div
-                                className={`status-pill ${order.orderStatus
-                                    .toLowerCase()
-                                    .replace(/\s/g, "-")}`}
-                            >
-
-                                {order.orderStatus}
-
-                            </div>
-
-                            <div
-                                className={`payment-pill ${order.paymentStatus
-                                    .toLowerCase()
-                                    .replace(/\s/g, "-")}`}
-                            >
-
-                                <CreditCard size={15} />
-
-                                {order.paymentStatus}
-
-                            </div>
-
-                        </div>
-
-                        {/* ===========================
-                           TIMELINE
-                        =========================== */}
-
-                        <div className="order-progress">
-
-                            <div
-                                className={`progress-step ${
-                                    [
-                                        "Pending",
-                                        "Processing",
-                                        "Shipped",
-                                        "Delivered",
-                                    ].includes(
-                                        order.orderStatus
-                                    )
-                                            ? "active"
-                                            : ""
-                                }`}
-                            >
-                                Pending
-                            </div>
-
-                            <div
-                                className={`progress-step ${
-                                    [
-                                        "Processing",
-                                        "Shipped",
-                                        "Delivered",
-                                    ].includes(
-                                        order.orderStatus
-                                    )
-                                            ? "active"
-                                            : ""
-                                }`}
-                            >
-                                Processing
-                            </div>
-
-                            <div
-                                className={`progress-step ${
-                                    [
-                                        "Shipped",
-                                        "Delivered",
-                                    ].includes(
-                                        order.orderStatus
-                                    )
-                                            ? "active"
-                                            : ""
-                                }`}
-                            >
-                                Shipped
-                            </div>
-
-                            <div
-                                className={`progress-step ${
-                                    order.orderStatus ===
-                                    "Delivered"
-                                        ? "active"
-                                        : ""
-                                }`}
-                            >
-                                Delivered
-                            </div>
-
-                        </div>
-
-                        {/* ===========================
-                           PRODUCTS
-                        =========================== */}
-
-                        <div className="order-products">
-
-                            {order.items.map((item) => (
-                                <div
-                                    key={item._id}
-                                    className="order-product"
-                                >
-
-                                    <div className="product-image">
-
-                                        <img
-                                            src={
-                                                item.product?.images?.[0]
-                                                    ? `http://localhost:5000${item.product.images[0]}`
-                                                    : "/placeholder.png"
-                                            }
-                                            alt={
-                                                item.product?.name ||
-                                                "Product"
-                                            }
-                                        />
-
-                                    </div>
-
-                                    <div className="product-content">
-
-                                        <h3>
-
-                                            {item.product?.name ||
-                                                "Product Removed"}
-
-                                        </h3>
-
-                                        <div className="product-details">
-
-                                            <span>
-
-                                                Qty
-
-                                                <strong>
-
-                                                    {item.quantity}
-
-                                                </strong>
-
-                                            </span>
-
-                                            <span>
-
-                                                Price
-
-                                                <strong>
-
-                                                    {formatPrice(
-                                                        item.price
-                                                    )}
-
-                                                </strong>
-
-                                            </span>
-
-                                        </div>
-
-                                    </div>
-
-                                    <div className="product-price">
-
-                                        {formatPrice(
-                                            item.price *
-                                            item.quantity
-                                        )}
-
-                                    </div>
-
-                                </div>
-
-                            ))}
-
-                        </div>
-
-                        {/* ======================
-                            ORDER SUMMARY
-                        ====================== */}
-
-                        <div className="summary-card">
-
-                            <div className="summary-row">
-
-                                <span>
-
-                                    Payment Method
-
-                                </span>
-
-                                <strong>
-
-                                    {order.paymentMethod}
-
-                                </strong>
-
-                            </div>
-
-                            <div className="summary-row">
-
-                                <span>
-
-                                    Shipping
-
-                                </span>
-
-                                <strong>
-
-                                    {order.shippingAddress?.city},{" "}
-                                    {order.shippingAddress?.state}
-
-                                </strong>
-
-                            </div>
-
-                            <div className="summary-row">
-
-                                <span>
-
-                                    Items
-
-                                </span>
-
-                                <strong>
-
-                                    {order.items.length}
-
-                                </strong>
-
-                            </div>
-
-                            <div className="summary-row total">
-
-                                <span>
-
-                                    Total Amount
-
-                                </span>
-
-                                <strong>
-
-                                    {formatPrice(
-                                        order.totalAmount
-                                    )}
-
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-                        {/* ======================
-                            CARD FOOTER
-                        ====================== */}
-
-                        <div className="card-footer">
-
-                            <button
-                                className="invoice-btn"
-                                onClick={() =>
-                                    downloadInvoice(
-                                        order._id
-                                    )
-                                }
-                            >
-
-                                <Download size={18} />
-
-                                Download Invoice
-
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                ))}
-
+            <h1>No Orders Yet</h1>
+
+            <p>
+              Looks like you haven't placed your first
+              order yet.
+            </p>
+
+            <Link
+              to="/products"
+              className="shop-btn"
+            >
+              Start Shopping
+              <FaArrowRight />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="orders-page">
+      <div className="orders-container">
+
+        {/* =====================================
+            PAGE HEADER
+        ====================================== */}
+
+        <div className="orders-header">
+
+          <div className="orders-title-wrap">
+
+            <div className="orders-title-icon">
+              <FaShoppingBag />
             </div>
 
-            <div className="support-card">
+            <div>
+              <h1>My Orders</h1>
 
-                <div>
-
-                    <h3>
-
-                        Need help with your order?
-
-                    </h3>
-
-                    <p>
-
-                        Our support team is available to help
-                        with returns, cancellations and
-                        delivery updates.
-
-                    </p>
-
-                </div>
-
-                <Link
-                    to="/contact"
-                    className="support-btn"
-                >
-
-                    Contact Support
-
-                </Link>
-
+              <p>
+                Track your purchases and delivery status.
+              </p>
             </div>
+
+          </div>
+
+          <div className="orders-counter">
+
+            <FaBoxOpen />
+
+            <div>
+              <strong>{orders.length}</strong>
+
+              <span>
+                {orders.length === 1
+                  ? "Total Order"
+                  : "Total Orders"}
+              </span>
+            </div>
+
+          </div>
 
         </div>
 
-    );
+        {/* =====================================
+            ORDERS
+        ====================================== */}
 
+        <div className="orders-list">
+
+          {orders.map((order) => {
+
+            const currentStep = getStatusStep(
+              order.orderStatus
+            );
+
+            const totalItems =
+              order.items?.reduce(
+                (sum, item) =>
+                  sum + Number(item.quantity || 0),
+                0
+              ) || 0;
+
+            const status =
+              order.orderStatus || "Pending";
+
+            const paymentStatus =
+              order.paymentStatus || "Pending";
+
+            return (
+              <article
+                className="order-card"
+                key={order._id}
+              >
+
+                {/* =================================
+                    ORDER HEADER
+                ================================== */}
+
+                <div className="order-card-header">
+
+                  <div className="order-main-info">
+
+                    <h2>
+                      Order #
+                      {order._id
+                        ?.slice(-8)
+                        .toUpperCase()}
+                    </h2>
+
+                    <p>
+                      Placed on{" "}
+                      <strong>
+                        {formatDate(
+                          order.createdAt
+                        )}
+                      </strong>
+
+                      {order.createdAt && (
+                        <>
+                          {", "}
+                          {new Date(
+                            order.createdAt
+                          ).toLocaleTimeString(
+                            "en-IN",
+                            {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            }
+                          )}
+                        </>
+                      )}
+                    </p>
+
+                  </div>
+
+                  <div className="order-header-right">
+
+                    <div className="order-badges">
+
+                      <span
+                        className={`status-pill ${getStatusClass(
+                          status
+                        )}`}
+                      >
+                        {getStatusIcon(status)}
+                        {status}
+                      </span>
+
+                      <span
+                        className={`payment-pill ${getStatusClass(
+                          paymentStatus
+                        )}`}
+                      >
+                        <FaCreditCard />
+                        {paymentStatus}
+                      </span>
+
+                    </div>
+
+                    <Link
+                      to={`/orders/${order._id}`}
+                      className="view-details-btn"
+                    >
+                      <FaEye />
+                      <span>View Details</span>
+                      <FaArrowRight />
+                    </Link>
+
+                  </div>
+
+                </div>
+
+                {/* =================================
+                    PROGRESS TRACKER
+                ================================== */}
+
+                {status.toLowerCase() !==
+                  "cancelled" && (
+                  <div className="order-timeline">
+
+                    <div className="timeline-line">
+
+                      <div
+                        className="timeline-line-active"
+                        style={{
+                          width:
+                            currentStep <= 0
+                              ? "0%"
+                              : `${
+                                  (currentStep / 3) *
+                                  100
+                                }%`,
+                        }}
+                      />
+
+                    </div>
+
+                    {[
+                      {
+                        label: "Pending",
+                        icon: <FaBoxOpen />,
+                      },
+                      {
+                        label: "Processing",
+                        icon: <FaClock />,
+                      },
+                      {
+                        label: "Shipped",
+                        icon: <FaTruck />,
+                      },
+                      {
+                        label: "Delivered",
+                        icon: <FaCheckCircle />,
+                      },
+                    ].map((step, index) => {
+
+                      const completed =
+                        index <= currentStep;
+
+                      const current =
+                        index === currentStep;
+
+                      return (
+                        <div
+                          className={`timeline-step ${
+                            completed
+                              ? "completed"
+                              : ""
+                          } ${
+                            current
+                              ? "current"
+                              : ""
+                          }`}
+                          key={step.label}
+                        >
+
+                          <div className="timeline-circle">
+
+                            {completed ? (
+                              index <
+                                currentStep ? (
+                                <FaCheckCircle />
+                              ) : (
+                                step.icon
+                              )
+                            ) : (
+                              <span>
+                                {index + 1}
+                              </span>
+                            )}
+
+                          </div>
+
+                          <span>
+                            {step.label}
+                          </span>
+
+                        </div>
+                      );
+                    })}
+
+                  </div>
+                )}
+
+                {/* =================================
+                    CANCELLED
+                ================================== */}
+
+                {status.toLowerCase() ===
+                  "cancelled" && (
+                  <div className="cancelled-banner">
+
+                    <FaTimesCircle />
+
+                    <div>
+                      <strong>
+                        Order Cancelled
+                      </strong>
+
+                      <span>
+                        This order has been cancelled.
+                      </span>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* =================================
+                    PRODUCTS
+                ================================== */}
+
+                <div className="order-products">
+
+                  {order.items?.map((item) => {
+
+                    const product = item.product;
+
+                    const itemTotal =
+                      Number(item.price || 0) *
+                      Number(item.quantity || 0);
+
+                    return (
+                      <div
+                        className="order-product"
+                        key={item._id}
+                      >
+
+                        {/* IMAGE */}
+
+                        <div className="product-thumbnail">
+
+                          <img
+                            src={getImageUrl(
+                              product?.images?.[0]
+                            )}
+                            alt={
+                              product?.name ||
+                              "Product"
+                            }
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://placehold.co/120x120/111827/ffffff?text=TK";
+                            }}
+                          />
+
+                        </div>
+
+                        {/* NAME + QUANTITY */}
+
+                        <div className="product-details">
+
+                          <h3>
+                            {product?.name ||
+                              "Product"}
+                          </h3>
+
+                          <div className="product-quantity">
+                            Qty:{" "}
+                            <strong>
+                              {item.quantity}
+                            </strong>
+                          </div>
+
+                        </div>
+
+                        {/* PRICE */}
+
+                        <div className="product-price">
+
+                          <span>
+                            {formatPrice(
+                              itemTotal
+                            )}
+                          </span>
+
+                          {Number(
+                            item.quantity || 0
+                          ) > 1 && (
+                            <small>
+                              {formatPrice(
+                                item.price
+                              )} each
+                            </small>
+                          )}
+
+                        </div>
+
+                      </div>
+                    );
+                  })}
+
+                </div>
+
+                {/* =================================
+                    FOOTER
+                ================================== */}
+
+                <div className="order-card-footer">
+
+                  <div className="footer-summary">
+
+                    <div>
+                      <span>
+                        Total Items
+                      </span>
+
+                      <strong>
+                        {totalItems}
+                      </strong>
+                    </div>
+
+                    <div className="total-amount">
+
+                      <span>
+                        Total Amount
+                      </span>
+
+                      <strong>
+                        {formatPrice(
+                          order.totalAmount
+                        )}
+                      </strong>
+
+                    </div>
+
+                  </div>
+
+                  <div className="footer-actions">
+
+                    {status.toLowerCase() ===
+                      "pending" && (
+                      <button
+                        type="button"
+                        className="cancel-order-btn"
+                        onClick={() =>
+                          cancelOrder(
+                            order._id
+                          )
+                        }
+                      >
+                        <FaTimesCircle />
+                        Cancel Order
+                      </button>
+                    )}
+
+                    <Link
+                      to={`/orders/${order._id}`}
+                      className="mobile-details-btn"
+                    >
+                      View Details
+                      <FaArrowRight />
+                    </Link>
+
+                  </div>
+
+                </div>
+
+              </article>
+            );
+          })}
+
+        </div>
+      </div>
+    </div>
+  );
 }
